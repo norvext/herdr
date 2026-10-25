@@ -8,6 +8,7 @@ pub(crate) struct DecodedAgentViewProjection {
 
 pub(crate) enum EndpointControlMessage {
     HealthPong,
+    Usage(crate::protocol::endpoint::EndpointUsage),
     AgentViewProjection(DecodedAgentViewProjection),
     AgentCompletions(crate::protocol::endpoint::EndpointAgentCompletions),
     Snapshot(Box<crate::protocol::ClientShellSnapshot>),
@@ -18,6 +19,18 @@ pub(crate) fn decode_endpoint_control(
     kind: &str,
     data: &str,
 ) -> Result<EndpointControlMessage, String> {
+    if kind == crate::protocol::endpoint::USAGE_KIND {
+        return Ok(
+            serde_json::from_str::<crate::protocol::endpoint::EndpointUsage>(data)
+                .ok()
+                .filter(|p| {
+                    p.boot_id.len() <= 128
+                        && p.usage.as_ref().is_none_or(crate::usage::CodexUsage::valid)
+                })
+                .map(EndpointControlMessage::Usage)
+                .unwrap_or(EndpointControlMessage::Ignored),
+        );
+    }
     if kind == crate::protocol::endpoint::HEALTH_PONG_KIND {
         return Ok(EndpointControlMessage::HealthPong);
     }
@@ -74,6 +87,27 @@ pub(crate) fn protocol_failure_is_fatal(endpoint_id: &ClientEndpointId) -> bool 
 mod tests {
     use super::*;
     use crate::client::endpoint::ProfileId;
+
+    #[test]
+    fn usage_optional_control_validates_without_touching_core_codecs() {
+        let message = crate::protocol::endpoint::usage_message("boot", None).unwrap();
+        let crate::protocol::ServerMessage::EndpointControl { kind, data } = message else {
+            panic!("control expected")
+        };
+        assert!(matches!(
+            decode_endpoint_control(&kind, &data).unwrap(),
+            EndpointControlMessage::Usage(_)
+        ));
+        for data in [
+            "invalid",
+            r#"{"boot_id":"boot","usage":{"plan_type":null,"windows":[{"used_percent":200,"duration_minutes":300,"resets_at":1}],"updated_at":1,"stale":false}}"#,
+        ] {
+            assert!(matches!(
+                decode_endpoint_control(&kind, data).unwrap(),
+                EndpointControlMessage::Ignored
+            ));
+        }
+    }
 
     #[test]
     fn unknown_optional_controls_are_ignored() {

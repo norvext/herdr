@@ -367,6 +367,17 @@ Worktree commands also emit lifecycle events. `worktree.create` emits `workspace
 
 `workspace.close` rejects closing a primary workspace while linked-worktree workspaces are open unless its params include `"close_group": true`, returning `workspace_group_close_required` when explicit group intent is missing. An explicit group close emits one `workspace.closed` event for each workspace it closes.
 
+`usage.get` returns the server's cached Codex subscription quotas. It performs no network request or subprocess launch. The `usage` value is `null` before a successful read or when no subscription windows are available. `updated_at` and `resets_at` are Unix seconds; `used_percent` is consumption, and `duration_minutes` identifies each window. `stale` marks a failed refresh. The cache is server-local and is not persisted.
+
+```json
+{"id":"quota","method":"usage.get","params":{}}
+```
+
+```json
+{"id":"quota","result":{"type":"usage","usage":{"plan_type":"pro","windows":[{"used_percent":22,"duration_minutes":10080,"resets_at":1900000000}],"updated_at":1800000000,"stale":false}}}
+```
+
+
 ## Agent view queries
 
 `agent.view.set` installs one transient declarative projection for the built-in

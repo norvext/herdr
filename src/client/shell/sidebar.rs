@@ -211,6 +211,9 @@ pub(crate) fn render_sidebar(
     } else {
         Rect::new(area.right().saturating_sub(1), area.y, 1, area.height)
     };
+    let full_area = area;
+    let area = super::limits_sidebar::render(buffer, area, config, state);
+    hits.sidebar_sections_area = area;
     let (workspace_area, detail_area) =
         crate::ui::expanded_sidebar_sections(area, state.sidebar_section_split);
     hits.sidebar_section_divider =
@@ -441,7 +444,7 @@ pub(crate) fn render_sidebar(
 
     hits.sidebar_toggle = Rect::new(
         area.right().saturating_sub(2),
-        area.bottom().saturating_sub(1),
+        full_area.bottom().saturating_sub(1),
         u16::from(area.width > 1),
         u16::from(area.height > 0),
     );

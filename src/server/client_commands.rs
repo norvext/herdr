@@ -256,6 +256,11 @@ mod tests {
         );
 
         assert_eq!(
+            actual.remove("usage.get").as_deref(),
+            Some("b1a216a34622354ea7abc0a75a7e1efefb8149853d3b76d427d07ed83fdca8dd")
+        );
+
+        assert_eq!(
             actual, expected,
             "an existing endpoint method changed shape; add load-bearing behavior as a new advertised method or explicitly gate new fields"
         );

@@ -103,6 +103,7 @@ impl AppPolicy {
 }
 
 pub struct App {
+    pub(crate) codex_usage: crate::usage::UsageRuntime,
     pub state: AppState,
     pub(crate) pixel_mouse_available: bool,
     pub(crate) terminal_runtimes: crate::terminal::TerminalRuntimeRegistry,
@@ -619,6 +620,7 @@ impl App {
             custom_commands::EndpointCommandRegistry::new(&state.keybinds.custom_commands);
 
         let mut app = Self {
+            codex_usage: Default::default(),
             plugin_installation_leases,
             plugin_installation_cleanup_allowed,
             config_diagnostic_deadline: None,

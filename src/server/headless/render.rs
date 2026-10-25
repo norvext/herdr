@@ -728,6 +728,28 @@ impl HeadlessServer {
                     client.shell_agent_completions = Some(completions);
                     client.shell_agent_view = agent_view;
                 }
+                if client.shell_codex_usage.as_ref() != self.app.codex_usage.value.as_ref() {
+                    let sent = crate::protocol::endpoint::usage_message(
+                        &self.client_shell_boot_id,
+                        self.app.codex_usage.value.as_ref(),
+                    )
+                    .map_err(std::io::Error::other)
+                    .and_then(|message| {
+                        Self::frame_server_message(&message).map_err(std::io::Error::other)
+                    })
+                    .ok()
+                    .is_some_and(|framed| {
+                        client
+                            .writer
+                            .as_ref()
+                            .is_some_and(|writer| writer.control.send(framed).is_ok())
+                    });
+                    if !sent {
+                        broken_clients.push(client_id);
+                        continue;
+                    }
+                    client.shell_codex_usage = self.app.codex_usage.value.clone();
+                }
                 shell_projection_revision = client.shell_projection_revision;
                 if !client.shell_surface_active {
                     client.clear_deferred_render();

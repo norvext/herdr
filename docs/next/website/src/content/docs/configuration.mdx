@@ -363,6 +363,10 @@ The symbols are static, so this option does not enable spinner animation.
 
 The expanded desktop sidebar renders each inner array in `rows` as one line. These are the complete default layouts:
 
+**Codex subscription limits.** When Codex CLI is installed and signed in with ChatGPT on the Herdr server, the expanded sidebar shows a `Usage Limits` block for that server's current Codex profile. Herdr reads `account/rateLimits/read` through `codex app-server` once a minute without starting an agent turn. Rows show the window and percentage **used** first, followed by a bounded bar with distinct used and remaining sections and a trailing margin. The reset label is centered in the bar and uses the client system time zone: `сегодня HH:MM` for today, otherwise a Russian weekday and date. Narrow sidebars place the day above the bar and keep the clock centered inside it. Only windows actually returned by Codex appear: a weekly-only account has no five-hour row. Missing quotas and API-key-only accounts do not produce a block. Errors retain the last result marked `stale`; expired windows keep their last reported percentage and reset time in a muted style instead of implying a fresh allowance.
+
+The block follows the selected machine, hides in collapsed/mobile views and very short terminals, and leaves the spaces/agents divider draggable. It does not discover other logins or individual panes' custom `CODEX_HOME` values. Codex remains responsible for authentication; Herdr does not read or expose its credentials.
+
 ```toml
 [ui.sidebar.agents]
 row_gap = 0

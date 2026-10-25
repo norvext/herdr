@@ -30,6 +30,28 @@ pub const HEALTH_PONG_KIND: &str = "endpoint.health.pong.v1";
 pub const AGENT_VIEW_PROJECTION_CAPABILITY: &str = "agent_view_projection";
 pub const AGENT_VIEW_PROJECTION_KIND: &str = "endpoint.agent-view.v1";
 pub const AGENT_COMPLETIONS_CAPABILITY: &str = "agent_completions";
+pub const USAGE_CAPABILITY: &str = "codex_usage";
+pub const USAGE_KIND: &str = "endpoint.usage.v1";
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EndpointUsage {
+    pub boot_id: String,
+    pub usage: Option<crate::usage::CodexUsage>,
+}
+
+pub fn usage_message(
+    boot_id: &str,
+    usage: Option<&crate::usage::CodexUsage>,
+) -> serde_json::Result<ServerMessage> {
+    Ok(ServerMessage::EndpointControl {
+        kind: USAGE_KIND.into(),
+        data: serde_json::to_string(&EndpointUsage {
+            boot_id: boot_id.into(),
+            usage: usage.cloned(),
+        })?,
+    })
+}
+
 pub const AGENT_COMPLETIONS_KIND: &str = "endpoint.agent-completions.v1";
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -174,6 +196,7 @@ impl EndpointServerWelcome {
                 HEALTH_CHECK_CAPABILITY.into(),
                 AGENT_VIEW_PROJECTION_CAPABILITY.into(),
                 AGENT_COMPLETIONS_CAPABILITY.into(),
+                USAGE_CAPABILITY.into(),
             ],
             error: None,
         }
@@ -385,6 +408,7 @@ mod tests {
                 HEALTH_CHECK_CAPABILITY.to_string(),
                 AGENT_VIEW_PROJECTION_CAPABILITY.to_string(),
                 AGENT_COMPLETIONS_CAPABILITY.to_string(),
+                USAGE_CAPABILITY.to_string(),
             ]
         );
     }

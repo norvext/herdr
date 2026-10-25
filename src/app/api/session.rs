@@ -99,6 +99,31 @@ mod tests {
     }
 
     #[test]
+    fn usage_api_reads_server_cache_without_starting_a_collector() {
+        let mut app = app_with_two_tabs();
+        let usage = crate::usage::CodexUsage {
+            plan_type: Some("pro".into()),
+            windows: vec![crate::usage::UsageWindow {
+                used_percent: 12,
+                duration_minutes: 10080,
+                resets_at: 1900000000,
+            }],
+            updated_at: 1800000000,
+            stale: false,
+        };
+        app.codex_usage.complete(Ok(Some(usage.clone())));
+        let response = app.handle_api_request(crate::api::schema::Request {
+            id: "usage".into(),
+            method: Method::UsageGet(EmptyParams::default()),
+        });
+        let response: SuccessResponse = serde_json::from_str(&response).unwrap();
+        assert_eq!(
+            response.result,
+            ResponseResult::Usage { usage: Some(usage) }
+        );
+    }
+
+    #[test]
     fn session_snapshot_bootstraps_runtime_resources() {
         let mut app = app_with_two_tabs();
         let response = app.handle_api_request(crate::api::schema::Request {

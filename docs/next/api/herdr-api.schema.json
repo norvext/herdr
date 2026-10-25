@@ -6312,6 +6312,22 @@
             "params"
           ],
           "type": "object"
+        },
+        {
+          "properties": {
+            "method": {
+              "const": "usage.get",
+              "type": "string"
+            },
+            "params": {
+              "$ref": "#/schemas/request/$defs/EmptyParams"
+            }
+          },
+          "required": [
+            "method",
+            "params"
+          ],
+          "type": "object"
         }
       ],
       "properties": {
@@ -6783,6 +6799,36 @@
             "no_foreground_client"
           ],
           "type": "string"
+        },
+        "CodexUsage": {
+          "properties": {
+            "plan_type": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "stale": {
+              "type": "boolean"
+            },
+            "updated_at": {
+              "format": "int64",
+              "type": "integer"
+            },
+            "windows": {
+              "items": {
+                "$ref": "#/schemas/success_response/$defs/UsageWindow"
+              },
+              "maxItems": 2,
+              "type": "array"
+            }
+          },
+          "required": [
+            "windows",
+            "updated_at",
+            "stale"
+          ],
+          "type": "object"
         },
         "ConfigReloadStatus": {
           "enum": [
@@ -10415,6 +10461,28 @@
                 "type"
               ],
               "type": "object"
+            },
+            {
+              "properties": {
+                "type": {
+                  "const": "usage",
+                  "type": "string"
+                },
+                "usage": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/schemas/success_response/$defs/CodexUsage"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
             }
           ]
         },
@@ -10570,6 +10638,32 @@
             "focused",
             "pane_count",
             "agent_status"
+          ],
+          "type": "object"
+        },
+        "UsageWindow": {
+          "properties": {
+            "duration_minutes": {
+              "format": "uint32",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "resets_at": {
+              "format": "int64",
+              "minimum": 1,
+              "type": "integer"
+            },
+            "used_percent": {
+              "format": "uint8",
+              "maximum": 100,
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "used_percent",
+            "duration_minutes",
+            "resets_at"
           ],
           "type": "object"
         },

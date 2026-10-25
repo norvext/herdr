@@ -8428,3 +8428,51 @@ fn no_handle_internal_event_bypass_in_module() {
         bypass_lines.join("\n  ")
     );
 }
+
+#[tokio::test]
+async fn codex_usage_fans_out_without_changing_snapshot_revision() {
+    let mut server = test_headless_server();
+    install_shared_view_test_runtime(&mut server);
+    let (control, _render) = connect_matching_test_shell(&mut server, 7);
+    let _ = client_shell_snapshot(&control);
+    server.render_and_stream();
+    for _ in control.try_iter() {}
+    let revision = server.clients[&7].shell_snapshot.as_ref().unwrap().revision;
+    let usage = crate::usage::CodexUsage {
+        plan_type: Some("pro".into()),
+        windows: vec![crate::usage::UsageWindow {
+            used_percent: 22,
+            duration_minutes: 10080,
+            resets_at: 1900000000,
+        }],
+        updated_at: 1800000000,
+        stale: false,
+    };
+    assert!(
+        server.handle_internal_event_with_forwarding(AppEvent::CodexUsageRefreshed(Ok(Some(
+            usage.clone()
+        ))))
+    );
+    server.render_and_stream();
+    let projection = control
+        .try_iter()
+        .find_map(|bytes| match read_server_message(bytes) {
+            ServerMessage::EndpointControl { kind, data }
+                if kind == protocol::endpoint::USAGE_KIND =>
+            {
+                Some(serde_json::from_str::<protocol::endpoint::EndpointUsage>(&data).unwrap())
+            }
+            _ => None,
+        })
+        .expect("usage projection");
+    assert_eq!(projection.boot_id, server.client_shell_boot_id);
+    assert_eq!(projection.usage, Some(usage));
+    assert_eq!(
+        server.clients[&7].shell_snapshot.as_ref().unwrap().revision,
+        revision
+    );
+    assert!(server.handle_internal_event_with_forwarding(AppEvent::CodexUsageRefreshed(Ok(None))));
+    server.render_and_stream();
+    assert!(control.try_iter().any(|bytes| matches!(read_server_message(bytes), ServerMessage::EndpointControl { kind, data } if kind == protocol::endpoint::USAGE_KIND && serde_json::from_str::<protocol::endpoint::EndpointUsage>(&data).unwrap().usage.is_none())));
+    shutdown_test_runtimes(&mut server);
+}

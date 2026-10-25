@@ -102,6 +102,7 @@ pub(super) struct ShellHitMap {
     pub(super) agent_sort_toggle: Rect,
     pub(super) sidebar_divider: Rect,
     pub(super) sidebar_section_divider: Rect,
+    pub(super) sidebar_sections_area: Rect,
     pub(super) sidebar_toggle: Rect,
     pub(super) new_workspace: Rect,
     pub(super) new_tab: Rect,

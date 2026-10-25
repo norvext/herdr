@@ -29,6 +29,11 @@ enum RuntimeExitAction {
 impl App {
     pub(crate) fn handle_internal_event_with_render_impact(&mut self, ev: AppEvent) -> bool {
         match ev {
+            AppEvent::CodexUsageRefreshed(result) => {
+                let previous = self.codex_usage.value.clone();
+                self.codex_usage.complete(result);
+                previous != self.codex_usage.value
+            }
             AppEvent::GitStatusRefreshed {
                 results,
                 cache_updates,
@@ -1060,6 +1065,14 @@ impl App {
                         reason: crate::api::schema::ClientWindowTitleReason::NoForegroundClient,
                     },
                 );
+            }
+            Method::UsageGet(_) => {
+                return responses::encode_success(
+                    request.id,
+                    ResponseResult::Usage {
+                        usage: self.codex_usage.value.clone(),
+                    },
+                )
             }
             Method::SessionSnapshot(_) => return self.handle_session_snapshot(request.id),
             Method::WorkspaceList(_) => return self.handle_workspace_list(request.id),

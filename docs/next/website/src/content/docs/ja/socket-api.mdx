@@ -292,6 +292,17 @@ worktree コマンドはライフサイクルイベントも発行します。`w
 
 リンクされた worktree ワークスペースが開いている親ワークスペースを `workspace.close` で閉じるには、params に `"close_group": true` が必要です。明示的なグループクローズ指定がない場合は `workspace_group_close_required` を返します。明示的なグループクローズは、閉じた各ワークスペースについて `workspace.closed` イベントを 1 件ずつ発行します。
 
+`usage.get` はサーバーの Codex 利用上限キャッシュを返し、ネットワーク要求やプロセス起動は行いません。取得前や時間枠がない場合は `usage: null` です。`updated_at` と `resets_at` は Unix 秒、`used_percent` は消費率、`duration_minutes` は時間枠です。`stale` は更新失敗を示し、キャッシュは永続化しません。
+
+```json
+{"id":"quota","method":"usage.get","params":{}}
+```
+
+```json
+{"id":"quota","result":{"type":"usage","usage":{"plan_type":"pro","windows":[{"used_percent":22,"duration_minutes":10080,"resets_at":1900000000}],"updated_at":1800000000,"stale":false}}}
+```
+
+
 ## エージェントビューのクエリ
 
 `agent.view.set` は、組み込みの Agents ビューに一つの一時的な宣言型プロジェクションを

@@ -16,6 +16,7 @@ pub(crate) struct ClientShellEndpoint {
     pub(crate) snapshot: Option<Box<ClientShellSnapshot>>,
     /// Connection generation that produced `snapshot`. `None` is reserved for local tests.
     pub(crate) snapshot_generation: Option<u64>,
+    pub(crate) codex_usage: Option<(u64, crate::protocol::endpoint::EndpointUsage)>,
     pub(crate) agent_recency: HashMap<String, u64>,
     pub(super) agent_presentation: super::endpoint_agent_state::EndpointAgentPresentation,
     pub(crate) agent_view_projection: Option<ClientEndpointAgentViewProjection>,
@@ -75,6 +76,7 @@ impl ClientShellState {
                 ),
                 snapshot: previous.and_then(|endpoint| endpoint.snapshot.clone()),
                 snapshot_generation: previous.and_then(|endpoint| endpoint.snapshot_generation),
+                codex_usage: previous.and_then(|endpoint| endpoint.codex_usage.clone()),
                 agent_recency: previous
                     .map(|endpoint| endpoint.agent_recency.clone())
                     .unwrap_or_default(),
@@ -127,6 +129,7 @@ impl ClientShellState {
             endpoint.status = ClientEndpointStatus::Disabled;
             endpoint.snapshot = None;
             endpoint.snapshot_generation = None;
+            endpoint.codex_usage = None;
             endpoint.methods = None;
             endpoint.agent_recency.clear();
             endpoint.agent_presentation = Default::default();
@@ -156,6 +159,9 @@ impl ClientShellState {
             .find(|endpoint| &endpoint.endpoint_id == endpoint_id)
         {
             endpoint.status = status;
+            if status != ClientEndpointStatus::Online {
+                endpoint.codex_usage = None;
+            }
         }
     }
 
@@ -320,6 +326,31 @@ impl ClientShellState {
             .snapshot
             .as_deref()
             .map(|snapshot| (snapshot.boot_id.as_str(), snapshot.revision))
+    }
+
+    pub(crate) fn set_endpoint_usage(
+        &mut self,
+        endpoint_id: &ClientEndpointId,
+        generation: u64,
+        projection: crate::protocol::endpoint::EndpointUsage,
+    ) {
+        if let Some(endpoint) = self
+            .endpoints
+            .iter_mut()
+            .find(|e| &e.endpoint_id == endpoint_id)
+        {
+            if endpoint
+                .snapshot_generation
+                .is_some_and(|g| g != generation)
+                || endpoint
+                    .snapshot
+                    .as_ref()
+                    .is_none_or(|s| s.boot_id != projection.boot_id)
+            {
+                return;
+            }
+            endpoint.codex_usage = Some((generation, projection));
+        }
     }
 
     pub(crate) fn set_endpoint_agent_completions(
@@ -736,6 +767,7 @@ pub(super) fn local_endpoint() -> ClientShellEndpoint {
         status: ClientEndpointStatus::Online,
         snapshot: None,
         snapshot_generation: None,
+        codex_usage: None,
         agent_recency: HashMap::new(),
         agent_presentation: Default::default(),
         agent_view_projection: None,

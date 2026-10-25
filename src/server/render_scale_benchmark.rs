@@ -220,6 +220,53 @@ fn print_stage(
     }
 }
 
+fn print_usage_profiles() {
+    for (label, build) in [
+        (
+            "background workspaces",
+            workspaces as fn(usize) -> Vec<Workspace>,
+        ),
+        ("active panes", active_panes as fn(usize) -> Vec<Workspace>),
+    ] {
+        for count in [1, 15] {
+            let plain = profile(build, count);
+            let mut pipeline = RenderPipeline::new(build(count));
+            pipeline.client.set_endpoint_usage(
+                &crate::client::endpoint::ClientEndpointId::Local,
+                0,
+                crate::protocol::endpoint::EndpointUsage {
+                    boot_id: "bench-boot".into(),
+                    usage: Some(crate::usage::CodexUsage {
+                        plan_type: Some("plus".into()),
+                        windows: vec![
+                            crate::usage::UsageWindow {
+                                used_percent: 41,
+                                duration_minutes: 300,
+                                resets_at: 4000000000,
+                            },
+                            crate::usage::UsageWindow {
+                                used_percent: 22,
+                                duration_minutes: 10080,
+                                resets_at: 4000000000,
+                            },
+                        ],
+                        updated_at: 1800000000,
+                        stale: false,
+                    }),
+                },
+            );
+            let limits = profile_pipeline(pipeline);
+            println!(
+                "limits widget {label} count={count}: client median {}us -> {}us, p95 {}us -> {}us",
+                plain.client.median_us,
+                limits.client.median_us,
+                plain.client.p95_us,
+                limits.client.p95_us
+            );
+        }
+    }
+}
+
 fn print_profiles(label: &str, build: fn(usize) -> Vec<Workspace>) {
     let rows = CARDINALITIES.map(|count| (count, profile(build, count)));
     println!("{label}");
@@ -610,6 +657,7 @@ async fn render_scale_profile() {
     print_snapshot_encoding_profiles("background workspaces", workspaces);
     print_profiles("active panes (one workspace)", active_panes);
     print_snapshot_encoding_profiles("active panes", active_panes);
+    print_usage_profiles();
     print_token_rule_profiles();
     print_surface_reuse_profiles();
     print_surface_damage_profiles();

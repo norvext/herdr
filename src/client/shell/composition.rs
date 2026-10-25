@@ -54,7 +54,12 @@ impl ClientShellState {
                 && self.endpoint_status(&self.active_endpoint_id)
                     == Some(ClientEndpointStatus::Online)
         });
+        let now = time::OffsetDateTime::now_utc().unix_timestamp();
+        let usage_reset_labels =
+            super::limits_sidebar::reset_labels(&self.endpoints, &self.active_endpoint_id, now);
         let mut render_state = render::ShellRenderState {
+            now,
+            usage_reset_labels: &usage_reset_labels,
             machine_diagnostics: &self.machine_diagnostics,
             endpoints: &self.endpoints,
             active_endpoint_id: &self.active_endpoint_id,
@@ -205,12 +210,17 @@ impl ClientShellState {
             _ => (None, None),
         };
         let mut buffer = Buffer::empty(Rect::new(0, 0, cols, rows));
+        let now = time::OffsetDateTime::now_utc().unix_timestamp();
+        let usage_reset_labels =
+            super::limits_sidebar::reset_labels(&self.endpoints, &self.active_endpoint_id, now);
         self.hits = render::render_shell(
             &mut buffer,
             layout,
             snapshot,
             &self.config,
             render::ShellRenderState {
+                now,
+                usage_reset_labels: &usage_reset_labels,
                 machine_diagnostics: &self.machine_diagnostics,
                 endpoints: &self.endpoints,
                 active_endpoint_id: &self.active_endpoint_id,

@@ -177,6 +177,7 @@ pub(crate) struct ClientConnection {
     pub(crate) shell_location: Option<ClientShellLocation>,
     /// Last coherent shell replacement sent to this client.
     pub(crate) shell_snapshot: Option<crate::protocol::ClientShellSnapshot>,
+    pub(crate) shell_codex_usage: Option<crate::usage::CodexUsage>,
     pub(crate) shell_agent_completions: Option<crate::protocol::endpoint::EndpointAgentCompletions>,
     /// View policy paired with the last coherent shell replacement.
     pub(crate) shell_agent_view: Option<crate::api::schema::AgentViewSetParams>,
@@ -248,6 +249,7 @@ impl ClientConnection {
             shell_location: None,
             shell_snapshot: None,
             shell_agent_completions: None,
+            shell_codex_usage: None,
             shell_agent_view: None,
             shell_projection_revision: 0,
             shell_endpoint_command_in_flight: false,

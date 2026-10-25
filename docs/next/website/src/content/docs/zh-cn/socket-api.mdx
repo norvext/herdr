@@ -292,6 +292,17 @@ Worktree 命令也发出生命周期事件。`worktree.create` 发出 `workspace
 
 当关联的 worktree 工作区仍然打开时，父工作区只有在 `workspace.close` 的 params 中包含 `"close_group": true` 时才会被关闭；缺少显式关闭组意图时会返回 `workspace_group_close_required`。显式关闭组时，每个被关闭的工作区都会发出一个 `workspace.closed` 事件。
 
+`usage.get` 返回服务器缓存的 Codex 订阅限额，不发起网络请求或启动子进程。首次成功读取前或没有时间窗口时，`usage` 为 `null`。`updated_at` 和 `resets_at` 使用 Unix 秒，`used_percent` 表示已使用比例，`duration_minutes` 标识窗口，`stale` 表示刷新失败。缓存属于当前服务器且不持久化。
+
+```json
+{"id":"quota","method":"usage.get","params":{}}
+```
+
+```json
+{"id":"quota","result":{"type":"usage","usage":{"plan_type":"pro","windows":[{"used_percent":22,"duration_minutes":10080,"resets_at":1900000000}],"updated_at":1800000000,"stale":false}}}
+```
+
+
 ## 智能体视图查询
 
 `agent.view.set` 为内置 Agents 视图设置一个临时的声明式投影。智能体信息或当前

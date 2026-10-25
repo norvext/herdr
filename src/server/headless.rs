@@ -3277,6 +3277,11 @@ impl HeadlessServer {
             return false;
         }
         let mut changed = false;
+        if self.app.policy.background_updates {
+            self.app
+                .codex_usage
+                .refresh_if_due(now, self.app.event_tx.clone());
+        }
 
         // No resize polling needed — server has no terminal.
         // Client resize messages drive size changes instead.

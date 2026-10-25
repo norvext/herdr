@@ -230,6 +230,8 @@ pub(super) fn render_mode_bar(
 }
 
 pub(super) struct ShellRenderState<'a> {
+    pub(super) now: i64,
+    pub(super) usage_reset_labels: &'a [(String, String)],
     pub(super) machine_diagnostics: &'a super::machine_diagnostics::MachineDiagnostics,
     pub(super) endpoints: &'a [ClientShellEndpoint],
     pub(super) active_endpoint_id: &'a ClientEndpointId,
